@@ -70,14 +70,20 @@ function Chat() {
       setCurrentTypingMessage(aiResponse);
 
       // 创建 EventSource 连接
+      const queryParams = new URLSearchParams({
+        question: inputValue,
+        source: localStorage.getItem('bookUrl')
+      }).toString();
+      console.log(queryParams);
       const eventSource = new EventSource(
-        `http://127.0.0.1:8000/api/book-ask/${inputValue}`
+        `http://127.0.0.1:8000/api/book-ask?${queryParams}`
       );
-
+      console.log("`http://127.0.0.1:8000/api/book-ask?${queryParams}`");
+      console.log(`http://127.0.0.1:8000/api/book-ask?${queryParams}`);
       // 处理消息事件
       eventSource.onmessage = async (event) => {
         const data = JSON.parse(event.data);
-        aiResponse.content += data.data;
+        aiResponse.content += data.data.data;
         setCurrentTypingMessage({ ...aiResponse });
         scrollToBottom();
       };
@@ -124,19 +130,25 @@ function Chat() {
     }
     setShowModal(false);
     setShowGlobalLoading(true);
+
     
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/book-vec/${modalInput}`, {
-        method: 'GET',
+      const response = await fetch(`http://127.0.0.1:8000/api/book-vec`, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        body: JSON.stringify({
+          url: modalInput
+        })
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
+      // 将当前网址保存到本地存储（单值存储）
+      localStorage.setItem('bookUrl', modalInput);
+      
       const data = await response.json();
       console.log('Fetched data:', data);
       console.log('Modal input:', modalInput);
@@ -145,6 +157,7 @@ function Chat() {
     } finally {
       setShowGlobalLoading(false);
       setModalInput('');
+
     }
   };
 

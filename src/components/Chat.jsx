@@ -14,6 +14,8 @@ function Chat() {
   const messagesEndRef = useRef(null);
   const [currentTypingMessage, setCurrentTypingMessage] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [showLocalModal, setShowLocalModal] = useState(false);
+  const [localPathInput, setLocalPathInput] = useState('');
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ 
@@ -72,7 +74,7 @@ function Chat() {
       // 创建 EventSource 连接
       const queryParams = new URLSearchParams({
         question: inputValue,
-        source: localStorage.getItem('bookUrl')
+        source: localStorage.getItem('bookIndex')
       }).toString();
       console.log(queryParams);
       const eventSource = new EventSource(
@@ -147,7 +149,7 @@ function Chat() {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       // 将当前网址保存到本地存储（单值存储）
-      localStorage.setItem('bookUrl', modalInput);
+      localStorage.setItem('bookIndex', modalInput);
       
       const data = await response.json();
       console.log('Fetched data:', data);
@@ -158,6 +160,46 @@ function Chat() {
       setShowGlobalLoading(false);
       setModalInput('');
 
+    }
+  };
+
+  const handleLocalModalSubmit = async () => {
+    if (!localPathInput) {
+      alert('请选择文件');
+      return;
+    }
+    
+    setShowLocalModal(false);
+    setShowGlobalLoading(true);
+
+    try {
+      // 创建 FormData 对象
+      const formData = new FormData();
+      formData.append('file', localPathInput);
+
+      const response = await fetch(`http://127.0.0.1:8000/api/upload-doc`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json',
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      // 将文件名保存到本地存储
+      localStorage.setItem('bookIndex', localPathInput.name);
+      
+      const data = await response.json();
+      console.log('Fetched data:', data);
+    } catch (error) {
+      console.error('Error:', error);
+      alert('上传失败，请重试');
+    } finally {
+      setShowGlobalLoading(false);
+      setLocalPathInput(null);
     }
   };
 
@@ -200,6 +242,12 @@ function Chat() {
       <div className="chat-header">
         <button 
           className="modal-trigger-button"
+          onClick={() => setShowLocalModal(true)}
+        >
+          设置本地book
+        </button>
+        <button 
+          className="modal-trigger-button"
           onClick={() => setShowModal(true)}
         >
           设置book网址
@@ -227,6 +275,45 @@ function Chat() {
               <button 
                 className="modal-button cancel"
                 onClick={() => setShowModal(false)}
+              >
+                取消
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showLocalModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h3>上传本地文件</h3>
+            <div className="file-upload-container">
+              <input
+                type="file"
+                onChange={(e) => setLocalPathInput(e.target.files[0])}
+                className="file-input"
+                accept=".txt,.pdf,.doc,.docx"  // 可以根据需要修改接受的文件类型
+              />
+              {localPathInput && (
+                <div className="selected-file">
+                  已选择: {localPathInput.name}
+                </div>
+              )}
+            </div>
+            <div className="modal-buttons">
+              <button 
+                className="modal-button confirm"
+                onClick={handleLocalModalSubmit}
+                disabled={!localPathInput}
+              >
+                上传
+              </button>
+              <button 
+                className="modal-button cancel"
+                onClick={() => {
+                  setShowLocalModal(false);
+                  setLocalPathInput(null);
+                }}
               >
                 取消
               </button>

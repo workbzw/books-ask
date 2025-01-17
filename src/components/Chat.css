@@ -187,6 +187,7 @@
   border-bottom: 1px solid #565869;
   display: flex;
   justify-content: flex-end;
+  gap: 10px;
 }
 
 .modal-trigger-button {
@@ -360,4 +361,41 @@
 .option-pill:active {
   transform: translateY(0);
   box-shadow: none;
+}
+
+.file-upload-container {
+  margin-bottom: 20px;
+}
+
+.file-input {
+  width: 100%;
+  padding: 12px;
+  background-color: #40414f;
+  border: 1px solid #565869;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+}
+
+.file-input::-webkit-file-upload-button {
+  visibility: hidden;
+  width: 0;
+}
+
+.file-input::before {
+  content: '选择文件';
+  display: inline-block;
+  background-color: #10a37f;
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  margin-right: 12px;
+  cursor: pointer;
+}
+
+.selected-file {
+  margin-top: 10px;
+  color: #8e8ea0;
+  font-size: 14px;
+  word-break: break-all;
 } 
